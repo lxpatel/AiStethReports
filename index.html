@@ -262,7 +262,7 @@
         </div>
 
         <div class="panel" id="telemetryPanel" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-            <h2 style="width: 100%;">System Pipeline Diagnostics</h2>
+            <h2>System Pipeline Diagnostics</h2>
             <div id="statusPlaceholder" style="color: var(--text-muted); font-size: 0.95rem; padding: 40px 0; max-width: 320px; line-height: 1.5;">
                 Awaiting multi-modal sample vectors to initialize predictive telemetry layers...
             </div>
@@ -273,6 +273,12 @@
             <h2>Predictive Health Analysis Output</h2>
             
             <div class="metric-grid" id="metricsDashboard"></div>
+
+            <div style="margin-bottom: 25px;">
+                <button id="downloadPdfBtn" style="background: linear-gradient(90deg, #FF9900 0%, #FF5E62 100%); display: none; width: auto; padding: 12px 24px; font-size: 14px; box-shadow: 0 4px 15px rgba(255, 94, 98, 0.2);">
+                    📥 Export Operational PDF Report
+                </button>
+            </div>
 
             <label>Synthesized Clinical Intelligence Brief</label>
             <div class="brief-box" id="reportOutput"></div>
@@ -298,10 +304,12 @@
         const reportCard = document.getElementById('reportCard');
         const reportOutput = document.getElementById('reportOutput');
         const metricsDashboard = document.getElementById('metricsDashboard');
+        const downloadBtn = document.getElementById('downloadPdfBtn');
         
         loader.style.display = 'block';
         statusPlaceholder.style.display = 'none';
         reportCard.style.display = 'none';
+        downloadBtn.style.display = 'none';
         
         try {
             const response = await fetch('http://127.0.0.1:8000/api/v2/generate-comprehensive-report', {
@@ -319,6 +327,14 @@
             
             reportCard.style.display = 'block';
             reportOutput.textContent = data.compiled_brief;
+            
+            // Map the secure PDF link context
+            if (data.pdf_report_url) {
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = () => {
+                    window.open(data.pdf_report_url, '_blank');
+                };
+            }
             
             const rawPayloads = data.raw_data_payloads || {};
             const acoustic = rawPayloads.acoustic_metrics || {};
@@ -342,19 +358,19 @@
                     <span class="badge ${soundStatus}">Acoustic Signature</span>
                 </div>
                 <div class="metric-card">
+                    <div class="metric-title">Spectral Centroid</div>
+                    <div class="metric-value">${acoustic.mean_spectral_centroid_hz ?? "N/A"} Hz</div>
+                    <span class="badge badge-normal">Center of Mass</span>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Zero-Crossing Rate</div>
+                    <div class="metric-value">${acoustic.mean_zero_crossing_rate ?? "N/A"}</div>
+                    <span class="badge badge-normal">Signal Turbulence</span>
+                </div>
+                <div class="metric-card">
                     <div class="metric-title">Hemoglobin Profile</div>
                     <div class="metric-value">${hbData.observed_value} g/dL</div>
                     <span class="badge ${hbStatus}">${hbData.status}</span>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-title">Leukocyte Parameter</div>
-                    <div class="metric-value">${wbcData.observed_value}</div>
-                    <span class="badge ${wbcStatus}">WBC Layer</span>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-title">Auditory Signals Processed</div>
-                    <div class="metric-value">${totalSamples}</div>
-                    <span class="badge badge-normal">Telemetry Stream</span>
                 </div>
             `;
             
