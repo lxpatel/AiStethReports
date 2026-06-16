@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiStethReports - Naval Telehealth Core</title>
+    <style>
+        :root {
+            --navy-blue: #0A192F;
+            --gold: #F5A623;
+            --light-bg: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #333333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--navy-blue);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--gold);
+        }
+        main {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        h2 { color: var(--navy-blue); margin-top: 0; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea { height: 80px; resize: none; }
+        button {
+            background-color: var(--navy-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        button:hover { background-color: #172A45; border: 1px solid var(--gold); }
+        .report-output {
+            background-color: #222222;
+            color: #00FF00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            display: none;
+            box-shadow: inset 0 0 10px #000000;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            color: var(--navy-blue);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>AiStethReports Portal</h1>
+    <p>Multi-Modal Remote Telehealth & Acoustic Signature Core</p>
+</header>
+
+<main>
+    <div class="card">
+        <h2>Patient Data Ingestion Desk</h2>
+        <form id="analysisForm">
+            <div class="form-group">
+                <label for="history">Clinical History / Deployment Context:</label>
+                <textarea id="history" placeholder="Enter patient clinical background, age, and chronic descriptors..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="audio">Digital Stethoscope Recording (.wav):</label>
+                <input type="file" id="audio" accept=".wav" required>
+            </div>
+            <div class="form-group">
+                <label for="blood">Biochemical Blood Report (.pdf):</label>
+                <input type="file" id="blood" accept=".pdf" required>
+            </div>
+            <button type="submit">Execute Multi-Modal Triangulation</button>
+        </form>
+    </div>
+
+    <div class="loader" id="loader">⚙️ Processing Telemetry & Medical Documents... Please Wait.</div>
+
+    <div class="card" id="reportCard" style="display: none;">
+        <h2>Generated Clinical Summary Brief</h2>
+        <div class="report-output" id="reportOutput"></div>
+    </div>
+</main>
+
+<script>
+    document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const history = document.getElementById('history').value;
+        const audioFile = document.getElementById('audio').files[0];
+        const bloodFile = document.getElementById('blood').files[0];
+        
+        const formData = new FormData();
+        formData.append('patient_history', history);
+        formData.append('audio_file', audioFile);
+        formData.append('blood_report', bloodFile);
+        
+        const loader = document.getElementById('loader');
+        const reportCard = document.getElementById('reportCard');
+        const reportOutput = document.getElementById('reportOutput');
+        
+        loader.style.display = 'block';
+        reportCard.style.display = 'none';
+        
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/v2/generate-comprehensive-report', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) throw new Error('API Execution Error Server-Side');
+            
+            const data = await response.json();
+            
+            loader.style.display = 'none';
+            reportCard.style.display = 'block';
+            reportOutput.style.display = 'block';
+            
+            // Inject the compiled summary block directly into the terminal window
+            reportOutput.textContent = data.compiled_brief;
+            
+        } catch (error) {
+            loader.style.display = 'none';
+            alert('Error processing data packets: ' + error.message);
+        }
+    });
+</script>
+
+</body>
+</html>

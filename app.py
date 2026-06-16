@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import shutil
 import os
@@ -8,12 +9,23 @@ from pipeline import process_stethoscope_audio
 from blood_parser import analyze_blood_metrics
 from report_generator import compile_patient_summary
 
+# 1. Initialize the FastAPI Application instance
 app = FastAPI(
     title="AiStethReports API", 
     description="Integrated Multi-Modal Remote Telehealth Core",
     version="2.0.0"
 )
 
+# 2. Configure CORS Middleware (Enables index.html to communicate across ports safely)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, restrict this to specific trusted domains
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 3. Define Temporary Data Storage Context
 UPLOAD_DIR = "temp_patient_data"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -27,13 +39,13 @@ async def generate_comprehensive_report(
     audio_file: UploadFile = File(...),
     blood_report: UploadFile = File(...)
 ):
-    # 1. Validation Checks
+    # Validation Guards: Ensure proper payload structure
     if not audio_file.filename.endswith('.wav'):
         raise HTTPException(status_code=400, detail="Invalid audio format. Must be a .wav file.")
     if not blood_report.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Invalid report format. Must be a .pdf file.")
         
-    # 2. Save incoming payloads locally
+    # Stage incoming media buffers locally
     audio_path = os.path.join(UPLOAD_DIR, audio_file.filename)
     blood_path = os.path.join(UPLOAD_DIR, blood_report.filename)
     
@@ -42,7 +54,8 @@ async def generate_comprehensive_report(
         shutil.copyfileobj(blood_report.file, b_buf)
         
     try:
-        # 3. Execute acoustic feature extraction pipeline
+        # Process Streaming Subsystems
+        # 1. Execute Acoustic Engine Pipeline
         _, raw_mfccs, sample_rate = process_stethoscope_audio(audio_path)
         audio_metrics = {
             "sampling_rate_hz": sample_rate,
@@ -50,17 +63,17 @@ async def generate_comprehensive_report(
             "feature_dimensions": list(raw_mfccs.shape)
         }
         
-        # 4. Execute biochemical data parsing engine
+        # 2. Execute Biochemical Data Parsing Engine
         blood_analysis = analyze_blood_metrics(blood_path)
         
-        # 5. Synthesize all telemetry layers into a structured clinical summary text block
+        # 3. Synthesize Telemetry Data into Unified Text Summary Block
         final_summary_report = compile_patient_summary(
             patient_history=patient_history,
             audio_metrics=audio_metrics,
             blood_results=blood_analysis
         )
         
-        # Clean up files post-processing
+        # Clean up files immediately post-processing to keep patient data secure
         os.remove(audio_path)
         os.remove(blood_path)
         
@@ -74,7 +87,7 @@ async def generate_comprehensive_report(
         }
         
     except Exception as e:
-        # Emergency file cleanup on error loops
+        # Fallback security handling: Erase temporary staging objects on lifecycle fault
         for p in [audio_path, blood_path]:
             if os.path.exists(p):
                 os.remove(p)
