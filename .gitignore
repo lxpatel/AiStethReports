@@ -1,0 +1,11 @@
+# Isolate Virtual Environment binaries
+env/
+__pycache__/
+*.pyc
+
+# Block temporary data staging caches
+temp_patient_data/
+
+# OS metadata exclusions
+.DS_Store
+Thumbs.db
