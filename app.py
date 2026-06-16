@@ -4,34 +4,22 @@ import uvicorn
 import shutil
 import os
 
-# Import our custom feature processing modules
 from pipeline import process_stethoscope_audio
 from blood_parser import analyze_blood_metrics
 from report_generator import compile_patient_summary
 
-# 1. Initialize the FastAPI Application instance
-app = FastAPI(
-    title="AiStethReports API", 
-    description="Integrated Multi-Modal Remote Telehealth Core",
-    version="2.0.0"
-)
+app = FastAPI(title="AiStethReports API", version="3.0.0")
 
-# 2. Configure CORS Middleware (Enables index.html to communicate across ports safely)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to specific trusted domains
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 3. Define Temporary Data Storage Context
 UPLOAD_DIR = "temp_patient_data"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-@app.get("/")
-def home():
-    return {"status": "online", "system": "Multi-Modal Health Integration Core Ready"}
 
 @app.post("/api/v2/generate-comprehensive-report")
 async def generate_comprehensive_report(
@@ -39,13 +27,9 @@ async def generate_comprehensive_report(
     audio_file: UploadFile = File(...),
     blood_report: UploadFile = File(...)
 ):
-    # Validation Guards: Ensure proper payload structure
-    if not audio_file.filename.endswith('.wav'):
-        raise HTTPException(status_code=400, detail="Invalid audio format. Must be a .wav file.")
-    if not blood_report.filename.endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Invalid report format. Must be a .pdf file.")
+    if not audio_file.filename.endswith('.wav') or not blood_report.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file extensions provided.")
         
-    # Stage incoming media buffers locally
     audio_path = os.path.join(UPLOAD_DIR, audio_file.filename)
     blood_path = os.path.join(UPLOAD_DIR, blood_report.filename)
     
@@ -54,44 +38,25 @@ async def generate_comprehensive_report(
         shutil.copyfileobj(blood_report.file, b_buf)
         
     try:
-        # Process Streaming Subsystems
-        # 1. Execute Acoustic Engine Pipeline
-        _, raw_mfccs, sample_rate = process_stethoscope_audio(audio_path)
-        audio_metrics = {
-            "sampling_rate_hz": sample_rate,
-            "total_samples_extracted": float(raw_mfccs.size),
-            "feature_dimensions": list(raw_mfccs.shape)
-        }
-        
-        # 2. Execute Biochemical Data Parsing Engine
+        # Run our detailed analysis subsystems!
+        audio_metrics = process_stethoscope_audio(audio_path)
         blood_analysis = analyze_blood_metrics(blood_path)
         
-        # 3. Synthesize Telemetry Data into Unified Text Summary Block
         final_summary_report = compile_patient_summary(
             patient_history=patient_history,
             audio_metrics=audio_metrics,
             blood_results=blood_analysis
         )
         
-        # Clean up files immediately post-processing to keep patient data secure
         os.remove(audio_path)
         os.remove(blood_path)
         
-        return {
-            "status": "Success",
-            "compiled_brief": final_summary_report,
-            "raw_data_payloads": {
-                "acoustic_metrics": audio_metrics,
-                "biochemical_metrics": blood_analysis
-            }
-        }
+        return {"status": "Success", "compiled_brief": final_summary_report}
         
     except Exception as e:
-        # Fallback security handling: Erase temporary staging objects on lifecycle fault
         for p in [audio_path, blood_path]:
-            if os.path.exists(p):
-                os.remove(p)
-        raise HTTPException(status_code=500, detail=f"Comprehensive processing error: {str(e)}")
+            if os.path.exists(p): os.remove(p)
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)

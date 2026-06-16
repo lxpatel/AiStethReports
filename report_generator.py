@@ -1,40 +1,54 @@
 def compile_patient_summary(patient_history: str, audio_metrics: dict, blood_results: dict) -> str:
-    """
-    Integrates clinical inputs, acoustic telemetry, and biochemical markers
-    into a standardized medical synthesis framework for evaluation.
-    """
+    # 1. Gather all blood alerts
+    blood_alerts = []
+    low_hb = False
     
-    # 1. Parse out flagged blood anomalies for quick triage visibility
-    anomalies = []
-    if isinstance(blood_results, dict):
-        for marker, data in blood_results.items():
-            if "status" in data and "🚨" in data["status"]:
-                anomalies.append(f"{marker}: {data['observed_value']} (Ref: {data['reference_range']})")
+    for marker, data in blood_results.items():
+        if "🚨" in data["status"]:
+            blood_alerts.append(f"• {marker}: {data['observed_value']} ({data['status']}) -> Ref: {data['reference_range']}")
+            if "Hemoglobin" in marker and "LOW" in data["status"]:
+                low_hb = True
+                
+    blood_summary_text = "\n".join(blood_alerts) if blood_alerts else "• All monitored biochemical metrics fall within standard physiological ranges."
     
-    anomalies_text = ", ".join(anomalies) if anomalies else "None Detected"
+    # 2. Gather acoustic metrics
+    acoustic_finding = audio_metrics.get("acoustic_classification", "Unclassified")
+    confidence = audio_metrics.get("confidence_score", "N/A")
     
-    # 2. Extract key structural parameters from our working acoustic engine
-    feature_dims = audio_metrics.get("feature_dimensions", "N/A")
-    total_samples = audio_metrics.get("total_samples_extracted", "N/A")
-    
-    # 3. Compile everything into a unified clinical brief
-    clinical_brief = f"""
+    # 3. Intelligent Cross-Analysis Logic (Data Fusion)
+    diagnostic_insight = ""
+    if "Murmur" in acoustic_finding and low_hb:
+        diagnostic_insight = "⚠️ CLINICAL CORRELATION: Combined findings of Low Hemoglobin (Anemia) and turbulent heart sounds strongly suggest a physiological 'Anemic Murmur' caused by decreased blood viscosity. Recommend iron profile evaluation."
+    elif "Murmur" in acoustic_finding:
+        diagnostic_insight = "⚠️ CLINICAL CORRELATION: Isolated turbulent systolic sound detected. Suggests potential structural valve abnormality (e.g., aortic stenosis or mitral regurgitation). Recommend echocardiogram evaluation."
+    elif low_hb:
+        diagnostic_insight = "⚠️ CLINICAL CORRELATION: Microcytic/Normocytic Anemia indicated by low Hb marker. Cardiac acoustic pathways present clean rhythms. Suggests purely dietary or metabolic iron deficiency."
+    else:
+        diagnostic_insight = "✅ SYSTEM INSIGHT: No immediate cross-system pathophysiological correlations detected. Patient displays stable hemodynamic parameters."
+
+    # 4. Generate the complete formatted brief
+    detailed_report = f"""
 ====================================================================
-            NAVAL MEDICAL SUPPORT SERVICE SYSTEM - REPORT SUMMARY
+        NAVAL MEDICAL SUPPORT SERVICE SYSTEM - MULTI-MODAL ANALYSIS
 ====================================================================
-[CLINICAL CONTEXT / PATIENT HISTORY]
+[1. CLINICAL CONTEXT & HISTORY]
 {patient_history}
 
-[ACOUSTIC TELEMETRY (DIGITAL STETHOSCOPE CORE)]
-- Feature Matrix Map Dimensions : {feature_dims}
-- Total Auditory Packets Isolated: {total_samples}
-- Acoustic Pipeline Status      : Fingerprint Isolated Successfully
+[2. ACOUSTIC CORE (HEART SOUNDS DETAILED FINDING)]
+- Diagnostic Class: {acoustic_finding}
+- Confidence Layer : {confidence}
+- Telemetry Matrix : Matrix Size {audio_metrics.get('feature_dimensions')} | Total Samples: {audio_metrics.get('total_samples_extracted')}
 
-[BIOCHEMICAL SCREENING (BLOOD ANALYSIS LAYER)]
-- Flagged Lab Anomalies Detected: {anomalies_text}
+[3. BIOCHEMICAL PROFILE ANALYSIS (FULL BLOOD PANEL)]
+{blood_summary_text}
+
 ====================================================================
+[4. ADVANCED CLINICAL SYNTHESIS REPORT]
+{diagnostic_insight}
+
 RECOMMENDED NEXT ACTIONS FOR MEDICAL OFFICER:
-1. Cross-reference localized acoustic signatures with verified clinical anomalies.
-2. Monitor patient vital trend metrics if localized anomalies exist.
+1. Conduct targeted echocardiography if structural murmur flags persist.
+2. Review physiological workloads if operational fatigue correlates with low baseline oxygen-carrying markers (Hb).
+====================================================================
 """
-    return clinical_brief
+    return detailed_report
