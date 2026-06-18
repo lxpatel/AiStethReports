@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predictive Health Intelligence Suite</title>
+    <title>Predictive Cardio-Pulmonary Health Intelligence Suite</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #04081E 0%, #1A0510 50%, #060B26 100%);
@@ -86,12 +86,19 @@
         .badge-alert { background: rgba(255, 49, 49, 0.08); color: var(--neon-red); border: 1px solid rgba(255, 49, 49, 0.3); }
 
         .brief-box { background: rgba(4, 8, 30, 0.5); border-left: 3px solid var(--neon-blue); padding: 22px; font-family: 'Consolas', 'Courier New', monospace; color: #D1DCEB; white-space: pre-wrap; border-radius: 0 10px 10px 0; font-size: 0.9rem; line-height: 1.6; }
+
+        /* Dynamic Graphics Workspace Panel Elements */
+        .chart-container-wrapper {
+            width: 100%; background: rgba(4, 8, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px; padding: 16px; box-sizing: border-box; margin-top: 20px; display: none;
+        }
+        canvas { width: 100%; height: 160px; display: block; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Cardio-Pulmonary Diagnostics Desk</h1>
+    <h1>Predictive Cardio-Pulmonary Health Intelligence Suite</h1>
     <p>Multi-Modal Telehealth Synthesis & Telemetry Console</p>
 </header>
 
@@ -116,6 +123,10 @@
                     <label for="blood">Biochemical Laboratory Panel (.pdf)</label>
                     <input type="file" id="blood" accept=".pdf" required>
                 </div>
+                <div class="form-group">
+                    <label for="imaging">Integrated Radiological Imaging Scan (.png / .jpg / X-Ray / MRI)</label>
+                    <input type="file" id="imaging" accept="image/*">
+                </div>
                 <button type="submit">Analyze Samples</button>
             </form>
         </div>
@@ -123,26 +134,109 @@
         <div class="panel" id="telemetryPanel" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
             <h2>System Pipeline Diagnostics</h2>
             <div id="statusPlaceholder" style="color: var(--text-muted); font-size: 0.95rem; padding: 40px 0; max-width: 320px; line-height: 1.5;">
-                Awaiting multi-modal cardio-pulmonary sample vectors to initialize predictive telemetry layers...
+                Awaiting multi-modal cardio-pulmonary and radiological vectors to initialize predictive telemetry layers...
             </div>
-            <div class="loader" id="loader">🧬 EXECUTING SEPARATE CARDIAC & PULMONARY ACOUSTIC FEATURE EXTRACTION...</div>
+            <div class="loader" id="loader">🧬 EXECUTING INTEGRATED CORE SIGNAL FILTERING & COMPUTER VISION DENSITY MAPPING...</div>
+            
+            <div class="chart-container-wrapper" id="chartWrapper">
+                <label id="chartLabel" style="color: var(--neon-green); text-align: left; margin-bottom: 8px; font-size: 0.75rem; letter-spacing: 0.5px;">AI Telemetry Vector: Pulmonary Parenchyma Degradation Index (%)</label>
+                <canvas id="lungDamageChart"></canvas>
+            </div>
         </div>
 
         <div class="panel full-width" id="reportCard" style="display: none;">
-            <h2>Predictive Cardio-Pulmonary Analysis Output</h2>
+            <h2>Predictive Cardio-Pulmonary & Imaging Analysis Output</h2>
             <div class="metric-grid" id="metricsDashboard"></div>
             <div style="margin-bottom: 25px;">
                 <button id="downloadPdfBtn" style="background: linear-gradient(90deg, #FF9900 0%, #FF5E62 100%); display: none; width: auto; padding: 12px 24px; font-size: 14px;">
-                    📥 Export Certified EHR PDF Report
+                    📥 Export Certified Integrated EHR PDF Report
                 </button>
             </div>
-            <label>Synthesized Cardio-Pulmonary Intelligence Brief</label>
+            <label>Synthesized Multimodal Intelligence Brief</label>
             <div class="brief-box" id="reportOutput"></div>
         </div>
     </div>
 </main>
 
 <script>
+    function renderPulmonaryDegradationGraph(crackleIndex, hyperdenseRatio) {
+        const canvas = document.getElementById('lungDamageChart');
+        const ctx = canvas.getContext('2d');
+        const labelEl = document.getElementById('chartLabel');
+        
+        // Configuration adjustments for responsive rendering layout sizing
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 160;
+        
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // Determine cumulative severity ratio index profile
+        let structuralDamageScore = Math.min((crackleIndex * 14) + (hyperdenseRatio * 190), 98);
+        if (structuralDamageScore < 4) structuralDamageScore = 3.5; 
+
+        // Update the telemetry labeling metrics configuration color states
+        const isPathological = crackleIndex > 2.5 || hyperdenseRatio > 0.15;
+        labelEl.style.color = isPathological ? 'var(--neon-red)' : 'var(--neon-green)';
+
+        // Time series structural simulation array point intervals
+        const points = [0, structuralDamageScore * 0.25, structuralDamageScore * 0.55, structuralDamageScore * 0.78, structuralDamageScore];
+        const stepX = w / (points.length - 1);
+
+        // Render standard horizontal grid line dividers
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+            let yGrid = (h / 4) * i;
+            ctx.beginPath(); ctx.moveTo(0, yGrid); ctx.lineTo(w, yGrid); ctx.stroke();
+        }
+
+        // Setup the gradient visual bounding filling region
+        const areaGrad = ctx.createLinearGradient(0, h, 0, 0);
+        if (isPathological) {
+            areaGrad.addColorStop(0, 'rgba(255, 49, 49, 0.0)');
+            areaGrad.addColorStop(1, 'rgba(255, 49, 49, 0.22)');
+        } else {
+            areaGrad.addColorStop(0, 'rgba(57, 255, 20, 0.0)');
+            areaGrad.addColorStop(1, 'rgba(57, 255, 20, 0.18)');
+        }
+
+        // Trace vectors path loop
+        ctx.beginPath();
+        for (let i = 0; i < points.length; i++) {
+            let cx = i * stepX;
+            let cy = h - (points[i] / 100) * (h - 35) - 15;
+            if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+        }
+        ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+        ctx.fillStyle = areaGrad; ctx.fill();
+
+        // Trace out the structural telemetry stroke line path elements
+        ctx.beginPath();
+        for (let i = 0; i < points.length; i++) {
+            let cx = i * stepX;
+            let cy = h - (points[i] / 100) * (h - 35) - 15;
+            if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+        }
+        ctx.strokeStyle = isPathological ? '#FF3131' : '#39FF14';
+        ctx.lineWidth = 3; ctx.stroke();
+
+        // Draw structural pinpoint nodes
+        for (let i = 0; i < points.length; i++) {
+            let cx = i * stepX;
+            let cy = h - (points[i] / 100) * (h - 35) - 15;
+            
+            ctx.fillStyle = '#FFFFFF'; ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+            
+            if (i === points.length - 1) {
+                ctx.fillStyle = ctx.strokeStyle; ctx.font = 'bold 11px Segoe UI';
+                ctx.fillText(Math.round(points[i]) + '% Structural Volume Loss', cx - 145, cy - 12);
+            }
+        }
+    }
+
     document.getElementById('analysisForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -150,12 +244,16 @@
         const audioFile = document.getElementById('audio').files[0];
         const lungFile = document.getElementById('lung_audio').files[0];
         const bloodFile = document.getElementById('blood').files[0];
+        const imagingFile = document.getElementById('imaging').files[0];
         
         const formData = new FormData();
         formData.append('patient_history', history);
         formData.append('audio_file', audioFile);
         formData.append('lung_file', lungFile);
         formData.append('blood_report', bloodFile);
+        if (imagingFile) {
+            formData.append('imaging_file', imagingFile);
+        }
         
         const loader = document.getElementById('loader');
         const statusPlaceholder = document.getElementById('statusPlaceholder');
@@ -163,11 +261,13 @@
         const reportOutput = document.getElementById('reportOutput');
         const metricsDashboard = document.getElementById('metricsDashboard');
         const downloadBtn = document.getElementById('downloadPdfBtn');
+        const chartWrapper = document.getElementById('chartWrapper');
         
         loader.style.display = 'block';
         statusPlaceholder.style.display = 'none';
         reportCard.style.display = 'none';
         downloadBtn.style.display = 'none';
+        chartWrapper.style.display = 'none';
         
         try {
             const response = await fetch('/api/v2/generate-comprehensive-report', {
@@ -181,7 +281,7 @@
             
             loader.style.display = 'none';
             statusPlaceholder.style.display = 'block';
-            statusPlaceholder.innerHTML = "✅ Cardio-Pulmonary diagnostic execution completed successfully.";
+            statusPlaceholder.innerHTML = "✅ Integrated multi-modal diagnostic execution completed successfully.";
             
             reportCard.style.display = 'block';
             reportOutput.textContent = data.compiled_brief;
@@ -194,6 +294,7 @@
             const rawPayloads = data.raw_data_payloads || {};
             const acoustic = rawPayloads.acoustic_metrics || {};
             const blood = rawPayloads.biochemical_metrics || {};
+            const imaging = rawPayloads.radiological_metrics || null;
             
             const heartClassification = acoustic.heart_metrics?.acoustic_classification || "Normal Baseline";
             const lungClassification = acoustic.lung_metrics?.lung_classification || "Normal Baseline";
@@ -201,6 +302,31 @@
             
             const heartStatus = heartClassification.includes('High-Velocity') ? 'badge-alert' : 'badge-normal';
             const lungStatus = lungClassification.includes('Adventitious') ? 'badge-alert' : 'badge-normal';
+            
+            // Activate and execute the HTML5 Canvas telemetry graphing pipeline matrix
+            chartWrapper.style.display = 'block';
+            const cIdx = acoustic.lung_metrics?.pulmonary_crackle_index || 0.0;
+            const hRatio = imaging?.hyperdense_ratio || 0.0;
+            renderPulmonaryDegradationGraph(cIdx, hRatio);
+
+            let imagingHTML = `
+                <div class="metric-card">
+                    <div class="metric-title">Radiological Panel</div>
+                    <div class="metric-value" style="font-size: 0.9rem; padding: 4px 0;">No Scan Attached</div>
+                    <span class="badge badge-normal">Imaging Off</span>
+                </div>
+            `;
+
+            if (imaging) {
+                const imgStatusBadge = imaging.imaging_status.includes('PATHOLOGICAL') ? 'badge-alert' : 'badge-normal';
+                imagingHTML = `
+                    <div class="metric-card">
+                        <div class="metric-title">Radiological Panel</div>
+                        <div class="metric-value" style="font-size: 0.85rem; padding: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${imaging.asset_dimensions}</div>
+                        <span class="badge ${imgStatusBadge}">${imaging.imaging_status}</span>
+                    </div>
+                `;
+            }
             
             metricsDashboard.innerHTML = `
                 <div class="metric-card">
@@ -213,11 +339,7 @@
                     <div class="metric-value" style="font-size: 0.85rem; padding: 4px 0;">${lungClassification}</div>
                     <span class="badge ${lungStatus}">Lung Sound</span>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-title">Acoustic Energy Ratios</div>
-                    <div class="metric-value" style="font-size: 0.95rem;">H: ${acoustic.heart_metrics?.neural_energy_ratio} | L: ${acoustic.lung_metrics?.pulmonary_crackle_index}</div>
-                    <span class="badge badge-normal">H-Spectral / L-Crackle</span>
-                </div>
+                ${imagingHTML}
                 <div class="metric-card">
                     <div class="metric-title">Hemoglobin Profile</div>
                     <div class="metric-value">${hbData.observed_value} g/dL</div>
